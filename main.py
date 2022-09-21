@@ -1,3 +1,8 @@
+def on_log_full():
+    while True:
+        music.play_melody("C5 B A G F E D C ", 500)
+datalogger.on_log_full(on_log_full)
+
 def on_button_pressed_a():
     global logging
     logging = not (logging)
@@ -11,14 +16,16 @@ def on_button_pressed_ab():
     music.play_tone(494, music.beat(BeatFraction.SIXTEENTH))
 input.on_button_pressed(Button.AB, on_button_pressed_ab)
 
+soundADC = 0
 logging = False
-tempDeg = 0
-maxtempDeg = -100
-mintempDeg = 200
 tempADC = 0
+tempDeg = 0
+max2 = -100
+min2 = 300
 logging = False
 toggle = True
 strip = neopixel.create(DigitalPin.P8, 13, NeoPixelMode.RGB)
+music.set_volume(100)
 strip.set_brightness(50)
 strip.clear()
 strip.show()
@@ -339,25 +346,23 @@ temperature = Math.map(5, 5, -365, 16, 4)
 temperature2 = interpolate(150, resistance, temp)
 
 def on_every_interval():
-    global tempADC, tempDeg, toggle, mintempDeg, maxtempDeg
+    global tempADC, tempDeg, soundADC, min2, max2, toggle
     if logging:
         tempADC = pins.analog_read_pin(AnalogPin.P1)
         tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
-        
-        #determine if we have new max and min temps
-        mintempDeg = min(mintempDeg, tempDeg)
-        maxtempDeg = max(maxtempDeg, tempDeg)
-        
+        soundADC = input.sound_level()
+        # determine if we have new max and min temps
+        min2 = min(min2, tempDeg)
+        max2 = max(max2, tempDeg)
         datalogger.log(datalogger.create_cv("Light", input.light_level()),
             datalogger.create_cv("Temp", input.temperature()),
-            datalogger.create_cv("Temp_Thermistor", tempDeg))
+            datalogger.create_cv("Temp_Thermistor", tempDeg),
+            datalogger.create_cv("Sound", soundADC))
         strip.clear()
-        #strip.set_pixel_color(Math.map(input.temperature(), 25, 30, 0, 12),
-        #    neopixel.colors(NeoPixelColors.VIOLET))
-        
-        strip.set_pixel_color(Math.map(tempDeg, mintempDeg, maxtempDeg, 0, 12),
-                        neopixel.colors(NeoPixelColors.VIOLET))
-
+        # strip.set_pixel_color(Math.map(input.temperature(), 25, 30, 0, 12),
+        # neopixel.colors(NeoPixelColors.VIOLET))
+        strip.set_pixel_color(Math.map(tempDeg, min2, max2, 0, 12),
+            neopixel.colors(NeoPixelColors.VIOLET))
         strip.show()
         if toggle:
             basic.show_leds("""

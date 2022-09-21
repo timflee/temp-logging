@@ -1,3 +1,8 @@
+datalogger.onLogFull(function on_log_full() {
+    while (true) {
+        music.playMelody("C5 B A G F E D C ", 500)
+    }
+})
 input.onButtonPressed(Button.A, function on_button_pressed_a() {
     
     logging = !logging
@@ -11,14 +16,16 @@ input.onButtonPressed(Button.AB, function on_button_pressed_ab() {
     datalogger.deleteLog(datalogger.DeleteType.Fast)
     music.playTone(494, music.beat(BeatFraction.Sixteenth))
 })
+let soundADC = 0
 let logging = false
-let tempDeg = 0
-let maxtempDeg = -100
-let mintempDeg = 200
 let tempADC = 0
+let tempDeg = 0
+let max2 = -100
+let min2 = 300
 logging = false
 let toggle = true
 let strip = neopixel.create(DigitalPin.P8, 13, NeoPixelMode.RGB)
+music.setVolume(100)
 strip.setBrightness(50)
 strip.clear()
 strip.show()
@@ -47,14 +54,15 @@ loops.everyInterval(500, function on_every_interval() {
     if (logging) {
         tempADC = pins.analogReadPin(AnalogPin.P1)
         tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
-        // determine if we have new max and min temps
-        mintempDeg = Math.min(mintempDeg, tempDeg)
-        maxtempDeg = Math.max(maxtempDeg, tempDeg)
-        datalogger.log(datalogger.createCV("Light", input.lightLevel()), datalogger.createCV("Temp", input.temperature()), datalogger.createCV("Temp_Thermistor", tempDeg))
+        soundADC = input.soundLevel()
+        //  determine if we have new max and min temps
+        min2 = Math.min(min2, tempDeg)
+        max2 = Math.max(max2, tempDeg)
+        datalogger.log(datalogger.createCV("Light", input.lightLevel()), datalogger.createCV("Temp", input.temperature()), datalogger.createCV("Temp_Thermistor", tempDeg), datalogger.createCV("Sound", soundADC))
         strip.clear()
-        // strip.set_pixel_color(Math.map(input.temperature(), 25, 30, 0, 12),
-        //     neopixel.colors(NeoPixelColors.VIOLET))
-        strip.setPixelColor(Math.map(tempDeg, mintempDeg, maxtempDeg, 0, 12), neopixel.colors(NeoPixelColors.Violet))
+        //  strip.set_pixel_color(Math.map(input.temperature(), 25, 30, 0, 12),
+        //  neopixel.colors(NeoPixelColors.VIOLET))
+        strip.setPixelColor(Math.map(tempDeg, min2, max2, 0, 12), neopixel.colors(NeoPixelColors.Violet))
         strip.show()
         if (toggle) {
             basic.showLeds(`
