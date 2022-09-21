@@ -1,12 +1,30 @@
 def on_log_full():
+    global logging
+    logging = False
+    basic.show_leds("""
+        # # # # #
+                # # # # #
+                # # # # #
+                # # # # #
+                # # # # #
+    """)
     while True:
         music.play_melody("C5 B A G F E D C ", 500)
 datalogger.on_log_full(on_log_full)
 
 def on_button_pressed_a():
-    global logging
+    global logging, firstLoop
     logging = not (logging)
-    if not (logging):
+    if logging:
+        firstLoop = True
+        basic.show_leds("""
+            . . . . .
+                        . . . . #
+                        . . . # .
+                        # . # . .
+                        . # . . .
+        """)
+    else:
         basic.show_icon(IconNames.NO)
 input.on_button_pressed(Button.A, on_button_pressed_a)
 
@@ -17,9 +35,12 @@ def on_button_pressed_ab():
 input.on_button_pressed(Button.AB, on_button_pressed_ab)
 
 soundADC = 0
+tempDegExp = 0
 logging = False
 tempADC = 0
 tempDeg = 0
+firstLoop = True
+alpha = 0.2
 max2 = -100
 min2 = 300
 logging = False
@@ -346,45 +367,43 @@ temperature = Math.map(5, 5, -365, 16, 4)
 temperature2 = interpolate(150, resistance, temp)
 
 def on_every_interval():
-    global tempADC, tempDeg, soundADC, min2, max2, toggle
+    global tempADC, tempDeg, tempDegExp, soundADC, min2, max2, toggle, firstLoop
     if logging:
         tempADC = pins.analog_read_pin(AnalogPin.P1)
         tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
+        if firstLoop:
+            tempDegExp = tempDeg
+            firstLoop = False
+        else:
+            tempDegExp = alpha * tempDeg + (1 - alpha) * tempDegExp
+        #remember the last reading
+        tempDegPrev = tempDeg
+        
         soundADC = input.sound_level()
         # determine if we have new max and min temps
-        min2 = min(min2, tempDeg)
-        max2 = max(max2, tempDeg)
+        min2 = min(min2, tempDegExp)
+        max2 = max(max2, tempDegExp)
         datalogger.log(datalogger.create_cv("Light", input.light_level()),
             datalogger.create_cv("Temp", input.temperature()),
             datalogger.create_cv("Temp_Thermistor", tempDeg),
+            datalogger.create_cv("Temp_ThermistorExp", tempDegExp),
             datalogger.create_cv("Sound", soundADC))
         strip.clear()
         # strip.set_pixel_color(Math.map(input.temperature(), 25, 30, 0, 12),
         # neopixel.colors(NeoPixelColors.VIOLET))
-        strip.set_pixel_color(Math.map(tempDeg, min2, max2, 0, 12),
-            neopixel.colors(NeoPixelColors.VIOLET))
-        strip.show()
+        # strip.set_pixel_color(Math.map(tempDeg, min2, max2, 0, 12), neopixel.colors(NeoPixelColors.VIOLET))
+        # strip.show()
+        subBow = strip.range(0, Math.map(tempDegExp, min2, max2, 1, 13))
+        subBow.show_rainbow(1, 360)
         if toggle:
-            basic.show_leds("""
-                . . . . .
-                                . . . . #
-                                . . . # .
-                                # . # . .
-                                . # . . #
-            """)
+            pass
         else:
-            basic.show_leds("""
-                . . . . .
-                                . . . . #
-                                . . . # .
-                                # . # . .
-                                . # . . .
-            """)
+            pass
         toggle = not (toggle)
     else:
         strip.clear()
         strip.show()
-loops.every_interval(500, on_every_interval)
+loops.every_interval(50, on_every_interval)
 
 def on_forever():
     pass
