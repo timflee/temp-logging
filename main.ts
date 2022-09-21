@@ -7,7 +7,10 @@ input.onButtonPressed(Button.A, function () {
     }
 })
 let logging = false
+datalogger.deleteLog(datalogger.DeleteType.Full)
 logging = false
+let toggle = true
+music.playTone(262, music.beat(BeatFraction.Sixteenth))
 basic.forever(function () {
 	
 })
@@ -17,12 +20,23 @@ loops.everyInterval(100, function () {
         datalogger.createCV("Light", input.lightLevel()),
         datalogger.createCV("Temp", input.temperature())
         )
-        basic.showLeds(`
-            . . . . .
-            . . . . .
-            . . . . .
-            . . . . .
-            . . . . #
-            `)
+        if (toggle) {
+            basic.showLeds(`
+                . . . . .
+                . . . . #
+                . . . # .
+                # . # . .
+                . # . . #
+                `)
+        } else {
+            basic.showLeds(`
+                . . . . .
+                . . . . #
+                . . . # .
+                # . # . .
+                . # . . .
+                `)
+        }
+        toggle = !(toggle)
     }
 })
