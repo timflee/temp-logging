@@ -1,20 +1,22 @@
 input.onButtonPressed(Button.A, function () {
     logging = !(logging)
     if (logging) {
-        basic.showIcon(IconNames.Yes)
+    	
     } else {
-        basic.showIcon(IconNames.No)
+    	
     }
 })
+input.onButtonPressed(Button.AB, function () {
+    music.playTone(247, music.beat(BeatFraction.Sixteenth))
+    datalogger.deleteLog(datalogger.DeleteType.Fast)
+    music.playTone(494, music.beat(BeatFraction.Sixteenth))
+})
 let logging = false
-datalogger.deleteLog(datalogger.DeleteType.Full)
 logging = false
 let toggle = true
-music.playTone(262, music.beat(BeatFraction.Sixteenth))
-basic.forever(function () {
-	
-})
-loops.everyInterval(100, function () {
+basic.showIcon(IconNames.No)
+music.playTone(247, music.beat(BeatFraction.Sixteenth))
+loops.everyInterval(500, function () {
     if (logging) {
         datalogger.log(
         datalogger.createCV("Light", input.lightLevel()),
@@ -39,4 +41,7 @@ loops.everyInterval(100, function () {
         }
         toggle = !(toggle)
     }
+})
+basic.forever(function () {
+	
 })
