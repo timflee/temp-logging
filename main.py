@@ -14,8 +14,6 @@ datalogger.on_log_full(on_log_full)
 
 def on_button_pressed_a():
     global logging
-    serial.redirect_to_usb()
-    serial.set_baud_rate(BaudRate.BAUD_RATE19200)
     logging = not (logging)
     if logging:
         firstLoop = True
@@ -36,11 +34,17 @@ def on_button_pressed_ab():
     music.play_tone(494, music.beat(BeatFraction.SIXTEENTH))
 input.on_button_pressed(Button.AB, on_button_pressed_ab)
 
+def on_button_pressed_b():
+    serial.write_line("Test")
+input.on_button_pressed(Button.B, on_button_pressed_b)
+
 soundADC = 0
 tempDegExp = 0
 logging = False
 tempADC = 0
 tempDeg = 0
+serial.set_baud_rate(BaudRate.BAUD_RATE19200)
+serial.redirect_to_usb()
 firstLoop2 = True
 alpha = 0.2
 max2 = -100
@@ -378,7 +382,6 @@ def on_every_interval():
             firstLoop3 = False
         else:
             tempDegExp = alpha * tempDeg + (1 - alpha) * tempDegExp
-        serial.write_value("tempDegExp", tempDegExp)
         soundADC = input.sound_level()
         # determine if we have new max and min temps
         min2 = min(min2, tempDegExp)

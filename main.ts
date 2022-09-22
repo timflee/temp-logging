@@ -13,9 +13,7 @@ datalogger.onLogFull(function () {
 })
 input.onButtonPressed(Button.A, function () {
     let firstLoop: boolean;
-serial.redirectToUSB()
-    serial.setBaudRate(BaudRate.BaudRate19200)
-    logging = !(logging)
+logging = !(logging)
     if (logging) {
         firstLoop = true
         basic.showLeds(`
@@ -34,11 +32,15 @@ input.onButtonPressed(Button.AB, function () {
     datalogger.deleteLog(datalogger.DeleteType.Fast)
     music.playTone(494, music.beat(BeatFraction.Sixteenth))
 })
+input.onButtonPressed(Button.B, function () {
+    serial.writeValue("tempDegExp", tempDegExp)
+})
 let soundADC = 0
 let tempDegExp = 0
 let logging = false
 let tempADC = 0
 let tempDeg = 0
+serial.setBaudRate(BaudRate.BaudRate115200)
 let firstLoop2 = true
 let alpha = 0.2
 let max2 = -100
@@ -374,6 +376,10 @@ function interpolate(value: number, x: number[] = [], y: number[] = []): number 
 let temperature = Math.map(5, 5, -365, 16, 4)
 let temperature2 = interpolate(150, resistance, temp)
 loops.everyInterval(1000, function () {
+    tempADC = pins.analogReadPin(AnalogPin.P1)
+    tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
+})
+loops.everyInterval(50, function () {
     let firstLoop3: boolean;
 let subBow: neopixel.Strip;
 if (logging) {
@@ -385,7 +391,6 @@ if (firstLoop3) {
         } else {
             tempDegExp = alpha * tempDeg + (1 - alpha) * tempDegExp
         }
-        serial.writeValue("tempDegExp", tempDegExp)
         soundADC = input.soundLevel()
         // determine if we have new max and min temps
         min2 = Math.min(min2, tempDegExp)
@@ -414,10 +419,6 @@ if (firstLoop3) {
         strip.clear()
         strip.show()
     }
-})
-loops.everyInterval(1000, function () {
-    tempADC = pins.analogReadPin(AnalogPin.P1)
-    tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
 })
 basic.forever(function () {
 	
