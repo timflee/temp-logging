@@ -13,7 +13,9 @@ def on_log_full():
 datalogger.on_log_full(on_log_full)
 
 def on_button_pressed_a():
-    global logging, firstLoop
+    global logging
+    serial.redirect_to_usb()
+    serial.set_baud_rate(BaudRate.BAUD_RATE19200)
     logging = not (logging)
     if logging:
         firstLoop = True
@@ -39,7 +41,7 @@ tempDegExp = 0
 logging = False
 tempADC = 0
 tempDeg = 0
-firstLoop = True
+firstLoop2 = True
 alpha = 0.2
 max2 = -100
 min2 = 300
@@ -367,18 +369,16 @@ temperature = Math.map(5, 5, -365, 16, 4)
 temperature2 = interpolate(150, resistance, temp)
 
 def on_every_interval():
-    global tempADC, tempDeg, tempDegExp, soundADC, min2, max2, toggle, firstLoop
+    global tempADC, tempDeg, tempDegExp, soundADC, min2, max2, toggle
     if logging:
         tempADC = pins.analog_read_pin(AnalogPin.P1)
         tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
-        if firstLoop:
+        if firstLoop3:
             tempDegExp = tempDeg
-            firstLoop = False
+            firstLoop3 = False
         else:
             tempDegExp = alpha * tempDeg + (1 - alpha) * tempDegExp
-        #remember the last reading
-        tempDegPrev = tempDeg
-        
+        serial.write_value("tempDegExp", tempDegExp)
         soundADC = input.sound_level()
         # determine if we have new max and min temps
         min2 = min(min2, tempDegExp)
@@ -403,14 +403,14 @@ def on_every_interval():
     else:
         strip.clear()
         strip.show()
-loops.every_interval(50, on_every_interval)
-
-def on_forever():
-    pass
-basic.forever(on_forever)
+loops.every_interval(1000, on_every_interval)
 
 def on_every_interval2():
     global tempADC, tempDeg
     tempADC = pins.analog_read_pin(AnalogPin.P1)
     tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
-loops.every_interval(3600000, on_every_interval2)
+loops.every_interval(1000, on_every_interval2)
+
+def on_forever():
+    pass
+basic.forever(on_forever)
