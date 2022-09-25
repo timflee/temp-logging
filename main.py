@@ -35,7 +35,8 @@ def on_button_pressed_ab():
 input.on_button_pressed(Button.AB, on_button_pressed_ab)
 
 def on_button_pressed_b():
-    serial.write_line("Test")
+    serial.write_value("tempDegExp", tempDegExp)
+    serial.write_value("tempDeg", tempDeg)
 input.on_button_pressed(Button.B, on_button_pressed_b)
 
 soundADC = 0
@@ -43,8 +44,7 @@ tempDegExp = 0
 logging = False
 tempADC = 0
 tempDeg = 0
-serial.set_baud_rate(BaudRate.BAUD_RATE19200)
-serial.redirect_to_usb()
+serial.set_baud_rate(BaudRate.BAUD_RATE115200)
 firstLoop2 = True
 alpha = 0.2
 max2 = -100
@@ -373,6 +373,12 @@ temperature = Math.map(5, 5, -365, 16, 4)
 temperature2 = interpolate(150, resistance, temp)
 
 def on_every_interval():
+    global tempADC, tempDeg
+    tempADC = pins.analog_read_pin(AnalogPin.P1)
+    tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
+loops.every_interval(1000, on_every_interval)
+
+def on_every_interval2():
     global tempADC, tempDeg, tempDegExp, soundADC, min2, max2, toggle
     if logging:
         tempADC = pins.analog_read_pin(AnalogPin.P1)
@@ -406,13 +412,7 @@ def on_every_interval():
     else:
         strip.clear()
         strip.show()
-loops.every_interval(1000, on_every_interval)
-
-def on_every_interval2():
-    global tempADC, tempDeg
-    tempADC = pins.analog_read_pin(AnalogPin.P1)
-    tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
-loops.every_interval(1000, on_every_interval2)
+loops.every_interval(50, on_every_interval2)
 
 def on_forever():
     pass

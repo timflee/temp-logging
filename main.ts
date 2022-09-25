@@ -33,7 +33,11 @@ input.onButtonPressed(Button.AB, function () {
     music.playTone(494, music.beat(BeatFraction.Sixteenth))
 })
 input.onButtonPressed(Button.B, function () {
-    serial.writeValue("tempDegExp", tempDegExp)
+    if (logging) {
+        serial.writeLine("Logging:1")
+    } else {
+        serial.writeLine("Logging:0")
+    }
 })
 let soundADC = 0
 let tempDegExp = 0
@@ -375,11 +379,7 @@ function interpolate(value: number, x: number[] = [], y: number[] = []): number 
 }
 let temperature = Math.map(5, 5, -365, 16, 4)
 let temperature2 = interpolate(150, resistance, temp)
-loops.everyInterval(1000, function () {
-    tempADC = pins.analogReadPin(AnalogPin.P1)
-    tempDeg = interpolate(10 / (1023 / tempADC - 1), resistance, temp)
-})
-loops.everyInterval(50, function () {
+loops.everyInterval(500, function () {
     let firstLoop3: boolean;
 let subBow: neopixel.Strip;
 if (logging) {
@@ -395,6 +395,8 @@ if (firstLoop3) {
         // determine if we have new max and min temps
         min2 = Math.min(min2, tempDegExp)
         max2 = Math.max(max2, tempDegExp)
+        serial.writeValue("tempDegExp", tempDegExp)
+        serial.writeValue("tempDeg", tempDeg)
         datalogger.log(
         datalogger.createCV("Light", input.lightLevel()),
         datalogger.createCV("Temp", input.temperature()),
